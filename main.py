@@ -26,42 +26,96 @@ class Bandit:
 	def step(self, arm):
 		return np.random.normal(self.arms[arm], 1)
 
-def episilon_greedy(bandit, no_of_steps, epsilon, seed = None):
-	np.random.seed(seed)
+class MDP:
+	"""
+	Represents a Markov Decision Process.
+	"""
+	def __init__(self, S, A, R, p):
+		"""
+		Parameters
+		----------
+		S : int
+			Number of states
+		A : matrix
+			A[s][a] is True iff a is permitted in s
+		R : list
+			A list of reward generators
+		p : matrix
+			p[s][a][s'] = p(s'|s,a)
+		"""
 
-	Q = [0] * bandit.no_of_arms
-	N = [0] * bandit.no_of_arms
+		self.S = list(range(S))
+		self.A, self.R, self.p = A, R, p
+		self.no_of_states = S
+		self.no_of_actions = len(A[0])
 
-	sum_of_rewards = 0
+	def step(self, s, a):
+		"""Given a state and an action, returns a new state and a reward.
 
-	for _ in range(no_of_steps):
-		if np.random.random() > epsilon:
-			# greedy
-			action = np.argmax(Q)
-		else:
-			# random
-			action = np.random.choice(bandit.no_of_arms)
+		Parameters
+		----------
+		s : int
+			Current state
+		a : int
+			Action to take
+		"""
 
-		reward = bandit.step(action)
+		s_prime = np.random.choice(self.no_of_states, p = self.p[s][a])
+		r = self.R[s_prime].get()
 
-		sum_of_rewards += reward
+		return s_prime, r
 
-		N[action] += 1
-		Q[action] += (1 / N[action]) * (reward - Q[action])
+def epsilon_greedy(no_of_arms, epsilon, Q, N):
+	if np.random.random() > epsilon:
+		# greedy
+		action = np.argmax(Q)
+	else:
+		# random
+		action = np.random.choice(no_of_arms)
 
-	mean_reward = sum_of_rewards / no_of_steps
-
-	return mean_reward, Q, N
+	return action
 
 def main():
 	no_of_arms = 10
 	no_of_steps = 1000
 	epsilon = 0.1
 
-	bandit = Bandit(no_of_arms)
-	
-	print(episilon_greedy(bandit, no_of_steps, epsilon))
+	no_of_runs = 2000
 
+	#bandit = Bandit(no_of_arms)
+
+	arms = np.random.normal(0, 1, no_of_arms)
+
+	S = 1
+	A = [[True]] * no_of_arms
+	R = [NormalReward(m, 1) for m in arms]
+	p = [[[1] for _ in range(no_of_arms)]]
+
+	bandit = MDP(S, A, R, p)
+	
+	#optimal_action = np.argmax(bandit.arms)
+	optimal_action = np.argmax(arms)
+
+	np.random.seed(1)
+
+	Q = [[0] * no_of_arms] * no_of_runs
+	N = [[0] * no_of_arms] * no_of_runs
+
+	mean_rewards = [0] * no_of_steps
+
+	for j in range(no_of_steps):
+		for i in range(no_of_runs):
+			action = epsilon_greedy(no_of_arms, epsilon, Q[i], N[i])
+
+			#reward = bandit.step(action)
+			_, reward = bandit.step(0, action)
+
+			mean_rewards[j] += reward
+
+			N[i][action] += 1
+			Q[i][action] += (1 / N[i][action]) * (reward - Q[i][action])
+
+		mean_rewards[j] /= no_of_runs
 
 if __name__ == '__main__':
 	main()
