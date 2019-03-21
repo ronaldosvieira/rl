@@ -1,5 +1,23 @@
 import numpy as np
 
+class Reward:
+	pass
+
+class StaticReward(Reward):
+	def __init__(self, value):
+		self.value = value
+
+	def get(self):
+		return value
+
+class NormalReward(Reward):
+	def __init__(self, mean, std):
+		self.mean = mean
+		self.std = std
+
+	def get(self):
+		return np.random.normal(self.mean, self.std)
+
 class Bandit:
 	def __init__(self, arms):
 		self.no_of_arms = arms
