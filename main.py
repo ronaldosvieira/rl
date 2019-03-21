@@ -87,7 +87,7 @@ def main():
 	arms = np.random.normal(0, 1, no_of_arms)
 
 	S = 1
-	A = [[True]] * no_of_arms
+	A = [[True] * no_of_arms]
 	R = [NormalReward(m, 1) for m in arms]
 	p = [[[1] for _ in range(no_of_arms)]]
 
